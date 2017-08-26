@@ -1,0 +1,72 @@
+package com.glsebastiany.popularmovies;
+
+import android.content.Context;
+import android.content.Intent;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.glsebastiany.popularmovies.model.Film;
+import com.glsebastiany.popularmovies.util.NetworkUtils;
+import com.squareup.picasso.Picasso;
+
+import java.util.Locale;
+
+public class ActivityFilmDetail extends AppCompatActivity {
+
+    private static final String EXTRA_FILM = "EXTRA_FILM";
+
+    private Film mFilm;
+
+    private TextView mTextViewTitle;
+    private ImageView mImageViewPoster;
+    private TextView mTextViewReleaseDate;
+    private TextView mTextViewVoteAverage;
+    private TextView mTextViewSynopsis;
+
+
+    public static void startActivity(Context context, Film film){
+        Intent intent = new Intent(context, ActivityFilmDetail.class);
+        intent.putExtra(EXTRA_FILM, film);
+
+        context.startActivity(intent);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_film_detail);
+
+        findIds();
+
+        Intent intent = getIntent();
+
+        if (intent.hasExtra(EXTRA_FILM)) {
+            mFilm = (Film) getIntent().getSerializableExtra(EXTRA_FILM);
+
+            bindView();
+        }
+    }
+
+    private void findIds() {
+        mTextViewTitle = (TextView) findViewById(R.id.tv_title);
+        mImageViewPoster = (ImageView) findViewById(R.id.iv_film_poster);
+        mTextViewReleaseDate = (TextView) findViewById(R.id.tv_release_date);
+        mTextViewVoteAverage = (TextView) findViewById(R.id.tv_vote_average);
+        mTextViewSynopsis = (TextView) findViewById(R.id.tv_synopsis);
+    }
+
+    private void bindView() {
+        mTextViewTitle.setText(mFilm.getTitle());
+
+        Picasso
+                .with(this)
+                .load(NetworkUtils.getPosterUri(mFilm))
+                .into(mImageViewPoster);
+
+        mTextViewReleaseDate.setText(mFilm.getReleaseDate());
+        mTextViewVoteAverage.setText(String.format(Locale.getDefault(), "%1$.1f", mFilm.getVoteAverage()));
+        mTextViewSynopsis.setText(mFilm.getOverview());
+    }
+}
