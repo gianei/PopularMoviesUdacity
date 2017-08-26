@@ -1,0 +1,1 @@
+Add the TMDB api key in gradle.properties, with the name TMDB_API_KEY
