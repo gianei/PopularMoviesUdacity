@@ -31,7 +31,6 @@ public class FilmsAdapter extends RecyclerView.Adapter<FilmsAdapter.FilmViewHold
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.grid_item_film, parent, false);
 
         return new FilmViewHolder(view);
-
     }
 
     @Override
@@ -63,7 +62,7 @@ public class FilmsAdapter extends RecyclerView.Adapter<FilmsAdapter.FilmViewHold
 
             itemView.setOnClickListener(this);
 
-            this.poster = (ImageView) itemView.findViewById(R.id.iv_film_poster);
+            this.poster = itemView.findViewById(R.id.iv_film_poster);
         }
 
 

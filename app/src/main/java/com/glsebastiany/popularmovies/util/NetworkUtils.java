@@ -21,14 +21,12 @@ import java.util.Scanner;
 
 public class NetworkUtils {
 
-
-
     private static final String TAG = NetworkUtils.class.getSimpleName();
 
     private static final String TMDB_API_KEY = BuildConfig.TMDB_API_KEY;
+
     private static final String TMDB_BASE_URL = "http://api.themoviedb.org/3/";
     private static final String TMDB_IMAGE_BASE_URL = "http://image.tmdb.org/t/p/";
-
 
     private static final String PARAM_KEY = "api_key";
 
@@ -133,4 +131,5 @@ public class NetworkUtils {
                 .appendPath(film.getPosterPath().replace("/", ""))
                 .build();
     }
+
 }

@@ -39,8 +39,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void findIds() {
-        mProgressBar = (ProgressBar) findViewById(R.id.pb_loading_indicator);
-        mFilmsRecyclerView = (RecyclerView) findViewById(R.id.rv_films);
+        mProgressBar = findViewById(R.id.pb_loading_indicator);
+        mFilmsRecyclerView = findViewById(R.id.rv_films);
     }
 
     private void setupFilmsGrid() {

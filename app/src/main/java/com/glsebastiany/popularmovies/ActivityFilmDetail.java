@@ -2,8 +2,8 @@ package com.glsebastiany.popularmovies;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -24,7 +24,6 @@ public class ActivityFilmDetail extends AppCompatActivity {
     private TextView mTextViewReleaseDate;
     private TextView mTextViewVoteAverage;
     private TextView mTextViewSynopsis;
-
 
     public static void startActivity(Context context, Film film){
         Intent intent = new Intent(context, ActivityFilmDetail.class);
@@ -50,11 +49,11 @@ public class ActivityFilmDetail extends AppCompatActivity {
     }
 
     private void findIds() {
-        mTextViewTitle = (TextView) findViewById(R.id.tv_title);
-        mImageViewPoster = (ImageView) findViewById(R.id.iv_film_poster);
-        mTextViewReleaseDate = (TextView) findViewById(R.id.tv_release_date);
-        mTextViewVoteAverage = (TextView) findViewById(R.id.tv_vote_average);
-        mTextViewSynopsis = (TextView) findViewById(R.id.tv_synopsis);
+        mTextViewTitle = findViewById(R.id.tv_title);
+        mImageViewPoster = findViewById(R.id.iv_film_poster);
+        mTextViewReleaseDate = findViewById(R.id.tv_release_date);
+        mTextViewVoteAverage = findViewById(R.id.tv_vote_average);
+        mTextViewSynopsis = findViewById(R.id.tv_synopsis);
     }
 
     private void bindView() {
