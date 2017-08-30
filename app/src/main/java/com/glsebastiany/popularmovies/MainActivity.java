@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.glsebastiany.popularmovies.model.Film;
 import com.glsebastiany.popularmovies.util.NetworkUtils;
@@ -25,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView mFilmsRecyclerView;
     private FilmsAdapter mFilmsAdapter;
 
+    private TextView mErrorText;
     private ProgressBar mProgressBar;
 
     @Override
@@ -35,12 +37,21 @@ public class MainActivity extends AppCompatActivity {
         findIds();
         setupFilmsGrid();
 
-        new FetchMoviesTask().execute();
+        fetchMovies(NetworkUtils.SortType.Popular);
+    }
+
+    private void fetchMovies(NetworkUtils.SortType sortType) {
+        if (NetworkUtils.isConnectedToInternet(this)) {
+            new FetchMoviesTask().execute(sortType);
+        } else {
+            setErrorState();
+        }
     }
 
     private void findIds() {
         mProgressBar = findViewById(R.id.pb_loading_indicator);
         mFilmsRecyclerView = findViewById(R.id.rv_films);
+        mErrorText = findViewById(R.id.tv_error_message);
     }
 
     private void setupFilmsGrid() {
@@ -66,21 +77,38 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.menu_sort_popular:
-                new FetchMoviesTask().execute(NetworkUtils.SortType.Popular);
+                fetchMovies(NetworkUtils.SortType.Popular);
                 return true;
             case R.id.menu_sort_top_rated:
-                new FetchMoviesTask().execute(NetworkUtils.SortType.TopRated);
+                fetchMovies(NetworkUtils.SortType.TopRated);
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void preFetchSetStatus() {
+        mFilmsAdapter.setFilms(null);
+        mProgressBar.setVisibility(View.VISIBLE);
+        mErrorText.setVisibility(View.GONE);
+    }
+
+    private void postFetchSetStatus(List<Film> movies) {
+        mFilmsAdapter.setFilms(movies);
+        mProgressBar.setVisibility(View.GONE);
+        mErrorText.setVisibility(View.GONE);
+    }
+
+    private void setErrorState() {
+        mFilmsAdapter.setFilms(null);
+        mProgressBar.setVisibility(View.GONE);
+        mErrorText.setVisibility(View.VISIBLE);
     }
 
     private class FetchMoviesTask extends AsyncTask<NetworkUtils.SortType, Void, List<Film>>{
 
         @Override
         protected void onPreExecute() {
-            mFilmsAdapter.setFilms(null);
-            mProgressBar.setVisibility(View.VISIBLE);
+            preFetchSetStatus();
         }
 
         @Override
@@ -106,8 +134,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(List<Film> movies) {
-            mProgressBar.setVisibility(View.INVISIBLE);
-            mFilmsAdapter.setFilms(movies);
+            postFetchSetStatus(movies);
             Log.v(TAG, "Async task completed");
         }
     }

@@ -1,28 +1,29 @@
 package com.glsebastiany.popularmovies.model;
 
-import java.io.Serializable;
+import org.parceler.Parcel;
 
 /**
  * @see <a href="https://developers.themoviedb.org/3/movies/get-popular-movies">MVDB model</href>
  */
 
 @SuppressWarnings("unused")
-public class Film implements Serializable{
+@Parcel
+public class Film {
 
-    private String posterPath;
-    private boolean isAdult;
-    private String overview;
-    private String releaseDate;
-    private int[] genresIds;
-    private int id;
-    private String originalTitle;
-    private String originalLanguage;
-    private String title;
-    private String backDropPath;
-    private double popularity;
-    private int voteCount;
-    private boolean isVideo;
-    private double voteAverage;
+    String posterPath;
+    boolean isAdult;
+    String overview;
+    String releaseDate;
+    int[] genresIds;
+    int id;
+    String originalTitle;
+    String originalLanguage;
+    String title;
+    String backDropPath;
+    double popularity;
+    int voteCount;
+    boolean isVideo;
+    double voteAverage;
 
     public Film() {
     }

@@ -1,5 +1,8 @@
 package com.glsebastiany.popularmovies.util;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.util.Log;
 
@@ -130,6 +133,15 @@ public class NetworkUtils {
                 .appendPath(PATH_DEFAULT_WIDTH)
                 .appendPath(film.getPosterPath().replace("/", ""))
                 .build();
+    }
+
+    public static boolean isConnectedToInternet(Context context){
+        ConnectivityManager cm =
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
 }

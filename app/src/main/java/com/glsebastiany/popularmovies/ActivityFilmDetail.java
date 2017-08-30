@@ -11,6 +11,8 @@ import com.glsebastiany.popularmovies.model.Film;
 import com.glsebastiany.popularmovies.util.NetworkUtils;
 import com.squareup.picasso.Picasso;
 
+import org.parceler.Parcels;
+
 import java.util.Locale;
 
 public class ActivityFilmDetail extends AppCompatActivity {
@@ -27,7 +29,7 @@ public class ActivityFilmDetail extends AppCompatActivity {
 
     public static void startActivity(Context context, Film film){
         Intent intent = new Intent(context, ActivityFilmDetail.class);
-        intent.putExtra(EXTRA_FILM, film);
+        intent.putExtra(EXTRA_FILM, Parcels.wrap(film));
 
         context.startActivity(intent);
     }
@@ -42,8 +44,7 @@ public class ActivityFilmDetail extends AppCompatActivity {
         Intent intent = getIntent();
 
         if (intent.hasExtra(EXTRA_FILM)) {
-            mFilm = (Film) getIntent().getSerializableExtra(EXTRA_FILM);
-
+            mFilm = Parcels.unwrap(getIntent().getParcelableExtra(EXTRA_FILM));
             bindView();
         }
     }
