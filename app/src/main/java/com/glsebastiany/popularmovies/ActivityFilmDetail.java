@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.glsebastiany.popularmovies.model.Film;
@@ -26,6 +27,7 @@ public class ActivityFilmDetail extends AppCompatActivity {
     private TextView mTextViewReleaseDate;
     private TextView mTextViewVoteAverage;
     private TextView mTextViewSynopsis;
+    private Switch mSwitchFavorite;
 
     public static void startActivity(Context context, Film film){
         Intent intent = new Intent(context, ActivityFilmDetail.class);
@@ -55,6 +57,7 @@ public class ActivityFilmDetail extends AppCompatActivity {
         mTextViewReleaseDate = findViewById(R.id.tv_release_date);
         mTextViewVoteAverage = findViewById(R.id.tv_vote_average);
         mTextViewSynopsis = findViewById(R.id.tv_synopsis);
+        mSwitchFavorite = findViewById(R.id.sw_favorite);
     }
 
     private void bindView() {
@@ -68,5 +71,9 @@ public class ActivityFilmDetail extends AppCompatActivity {
         mTextViewReleaseDate.setText(mFilm.getReleaseDate());
         mTextViewVoteAverage.setText(String.format(Locale.getDefault(), "%1$.1f", mFilm.getVoteAverage()));
         mTextViewSynopsis.setText(mFilm.getOverview());
+
+        //TODO make a AsyncLoader to read the is favorite status
+        //getContentResolver().query()
+
     }
 }
