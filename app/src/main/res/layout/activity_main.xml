@@ -37,7 +37,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:text="@string/error_no_internet"
+        tools:text="@string/error_no_internet"
         tools:visibility="visible" />
 
 </android.support.constraint.ConstraintLayout>

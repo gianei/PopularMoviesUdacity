@@ -3,6 +3,8 @@
     <string name="film_poster_content_description">Film poster</string>
     <string name="popular">Popular</string>
     <string name="top_rated">Top Rated</string>
-    <string name="error_no_internet">You have no Internet connection</string>
+    <string name="favorites">Favorites</string>
     <string name="favorite">Favorite</string>
+    <string name="error_no_internet">You have no Internet connection</string>
+    <string name="error_no_favorites">You have no Favorites</string>
 </resources>

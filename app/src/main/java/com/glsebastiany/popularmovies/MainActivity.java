@@ -1,7 +1,11 @@
 package com.glsebastiany.popularmovies;
 
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -12,16 +16,20 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.glsebastiany.popularmovies.data.FilmsContentProviderCursorHelper;
 import com.glsebastiany.popularmovies.model.Film;
 import com.glsebastiany.popularmovies.util.NetworkUtils;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements
+        LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final int TASK_LOADER_ID = 0;
 
     private RecyclerView mFilmsRecyclerView;
     private FilmsAdapter mFilmsAdapter;
@@ -44,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
         if (NetworkUtils.isConnectedToInternet(this)) {
             new FetchMoviesTask().execute(sortType);
         } else {
-            setErrorState();
+            setErrorState(getString(R.string.error_no_internet));
         }
     }
 
@@ -82,6 +90,10 @@ public class MainActivity extends AppCompatActivity {
             case R.id.menu_sort_top_rated:
                 fetchMovies(NetworkUtils.SortType.TopRated);
                 return true;
+            case R.id.menu_sort_favorites:
+                preFetchSetStatus();
+                getSupportLoaderManager().initLoader(TASK_LOADER_ID, null, this);
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -92,15 +104,16 @@ public class MainActivity extends AppCompatActivity {
         mErrorText.setVisibility(View.GONE);
     }
 
-    private void postFetchSetStatus(List<Film> movies) {
+    private void postLoadSetStatus(List<Film> movies) {
         mFilmsAdapter.setFilms(movies);
         mProgressBar.setVisibility(View.GONE);
         mErrorText.setVisibility(View.GONE);
     }
 
-    private void setErrorState() {
+    private void setErrorState(String errorMessage) {
         mFilmsAdapter.setFilms(null);
         mProgressBar.setVisibility(View.GONE);
+        mErrorText.setText(errorMessage);
         mErrorText.setVisibility(View.VISIBLE);
     }
 
@@ -134,9 +147,60 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(List<Film> movies) {
-            postFetchSetStatus(movies);
+            postLoadSetStatus(movies);
             Log.v(TAG, "Async task completed");
         }
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, final Bundle loaderArgs) {
+
+        return new AsyncTaskLoader<Cursor>(this) {
+
+            Cursor mTaskData = null;
+
+            @Override
+            protected void onStartLoading() {
+                if (mTaskData != null) {
+                    deliverResult(mTaskData);
+                } else {
+                    forceLoad();
+                }
+            }
+
+            @Override
+            public Cursor loadInBackground() {
+                try {
+                    return FilmsContentProviderCursorHelper.getFilmsCursor(getContext());
+
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to asynchronously load data.");
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+
+            public void deliverResult(Cursor data) {
+                mTaskData = data;
+                super.deliverResult(data);
+            }
+        };
+
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        List<Film> filmsFromCursor = FilmsContentProviderCursorHelper.getFilmsFromCursor(data);
+        if (filmsFromCursor.size() == 0){
+            setErrorState(getString(R.string.error_no_favorites));
+        } else {
+            postLoadSetStatus(filmsFromCursor);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        postLoadSetStatus(new ArrayList<Film>());
     }
 
 }
