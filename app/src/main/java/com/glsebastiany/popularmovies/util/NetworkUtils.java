@@ -116,6 +116,7 @@ public class NetworkUtils {
                 film.setOverview(currentJsonObject.getString("overview"));
                 film.setReleaseDate(currentJsonObject.getString("release_date"));
                 film.setVoteAverage(currentJsonObject.getDouble("vote_average"));
+                film.setId(currentJsonObject.getInt("id"));
 
                 movies.add(film);
             }

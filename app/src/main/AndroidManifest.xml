@@ -24,7 +24,7 @@
             android:parentActivityName=".MainActivity"/>
 
         <provider
-            android:name=".data.PopularMoviesContentProvider"
+            android:name=".data.FilmsContentProvider"
             android:authorities="com.glsebastiany.popularmovies"
             android:exported="false"/>
     </application>

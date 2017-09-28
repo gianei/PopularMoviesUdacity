@@ -9,7 +9,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-public class PopularMoviesContentProvider extends ContentProvider {
+public class FilmsContentProvider extends ContentProvider {
     
     public static final int FAVORITES = 100;
     public static final int FAVORITE_WITH_ID = 101;
@@ -83,7 +83,7 @@ public class PopularMoviesContentProvider extends ContentProvider {
                 break;
 
             case FAVORITE_WITH_ID:
-                String mySelection = "_id=?";
+                String mySelection = DatabaseContract.FavoriteEntry._ID + "=?";
                 String mySelectionArgs[] = new String[]{uri.getPathSegments().get(1)};
                 returnCursor = db.query(DatabaseContract.FavoriteEntry.TABLE_NAME,
                         projection,
@@ -115,7 +115,7 @@ public class PopularMoviesContentProvider extends ContentProvider {
         switch (match) {
             case FAVORITE_WITH_ID:
                 String id = uri.getPathSegments().get(1);
-                tasksDeleted = db.delete(DatabaseContract.FavoriteEntry.TABLE_NAME, "_id=?", new String[]{id});
+                tasksDeleted = db.delete(DatabaseContract.FavoriteEntry.TABLE_NAME, DatabaseContract.FavoriteEntry._ID + "=?", new String[]{id});
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);

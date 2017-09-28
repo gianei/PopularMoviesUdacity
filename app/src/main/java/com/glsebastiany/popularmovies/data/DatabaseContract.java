@@ -21,14 +21,14 @@ public class DatabaseContract {
 
         public static final String TABLE_NAME = "favorites";
 
-        public static final String COLUMN_FILM_ID = "film_id";
+        public static final String COLUMN_TITLE = "title";
 
 
         @NonNull
         public static String getCreateTableSql() {
             return "CREATE TABLE "  + TABLE_NAME + " (" +
-                    _ID + " INTEGER PRIMARY KEY, " +
-                    COLUMN_FILM_ID + " INTEGER NOT NULL " +
+                    _ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    COLUMN_TITLE + " TEXT NOT NULL " +
                         ");";
         }
 
