@@ -1,5 +1,6 @@
 package com.glsebastiany.popularmovies;
 
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -26,16 +27,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
-        LoaderManager.LoaderCallbacks<Cursor> {
+        LoaderManager.LoaderCallbacks<List<Film>> {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int TASK_LOADER_ID = 0;
+    private static final String SELECTED_FILTER_PREF_KEY = "selected_filter_pref_key";
 
     private RecyclerView mFilmsRecyclerView;
     private FilmsAdapter mFilmsAdapter;
 
     private TextView mErrorText;
     private ProgressBar mProgressBar;
+
+    private SharedPreferences mPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +49,9 @@ public class MainActivity extends AppCompatActivity implements
         findIds();
         setupFilmsGrid();
 
-        fetchMovies(NetworkUtils.SortType.Popular);
+        mPreferences = getPreferences(MODE_PRIVATE);
+
+        applyFilter(mPreferences.getInt(SELECTED_FILTER_PREF_KEY, R.id.menu_sort_popular));
     }
 
     private void fetchMovies(NetworkUtils.SortType sortType) {
@@ -83,7 +89,16 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
+        int menuItemId = item.getItemId();
+        mPreferences
+                .edit()
+                .putInt(SELECTED_FILTER_PREF_KEY, menuItemId)
+                .apply();
+        return applyFilter(menuItemId) || super.onOptionsItemSelected(item);
+    }
+
+    private boolean applyFilter(int menuItemId) {
+        switch (menuItemId){
             case R.id.menu_sort_popular:
                 fetchMovies(NetworkUtils.SortType.Popular);
                 return true;
@@ -95,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements
                 getSupportLoaderManager().initLoader(TASK_LOADER_ID, null, this);
                 return true;
         }
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     private void preFetchSetStatus() {
@@ -153,11 +168,11 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public Loader<Cursor> onCreateLoader(int id, final Bundle loaderArgs) {
+    public Loader<List<Film>> onCreateLoader(int id, final Bundle loaderArgs) {
 
-        return new AsyncTaskLoader<Cursor>(this) {
+        return new AsyncTaskLoader<List<Film>>(this) {
 
-            Cursor mTaskData = null;
+            List<Film> mTaskData = null;
 
             @Override
             protected void onStartLoading() {
@@ -169,9 +184,9 @@ public class MainActivity extends AppCompatActivity implements
             }
 
             @Override
-            public Cursor loadInBackground() {
+            public List<Film> loadInBackground() {
                 try {
-                    return FilmsContentProviderCursorHelper.getFilmsCursor(getContext());
+                    return FilmsContentProviderCursorHelper.getFilmsFromCursor(FilmsContentProviderCursorHelper.getFilmsCursor(getContext()));
 
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to asynchronously load data.");
@@ -180,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }
 
-            public void deliverResult(Cursor data) {
+            public void deliverResult(List<Film> data) {
                 mTaskData = data;
                 super.deliverResult(data);
             }
@@ -189,17 +204,16 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        List<Film> filmsFromCursor = FilmsContentProviderCursorHelper.getFilmsFromCursor(data);
-        if (filmsFromCursor.size() == 0){
+    public void onLoadFinished(Loader<List<Film>> loader, List<Film> data) {
+        if (data.size() == 0){
             setErrorState(getString(R.string.error_no_favorites));
         } else {
-            postLoadSetStatus(filmsFromCursor);
+            postLoadSetStatus(data);
         }
     }
 
     @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
+    public void onLoaderReset(Loader<List<Film>> loader) {
         postLoadSetStatus(new ArrayList<Film>());
     }
 

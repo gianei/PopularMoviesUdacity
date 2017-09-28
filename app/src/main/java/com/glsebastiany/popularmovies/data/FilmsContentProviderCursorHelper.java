@@ -62,6 +62,8 @@ public class FilmsContentProviderCursorHelper {
             return new ArrayList<>(0);
         }
 
+
+
         ArrayList<Film> films = new ArrayList<>(cursor.getCount());
 
         int idIndex = cursor.getColumnIndex(DatabaseContract.FavoriteEntry._ID);
@@ -71,7 +73,7 @@ public class FilmsContentProviderCursorHelper {
         int releaseDateIndex = cursor.getColumnIndex(DatabaseContract.FavoriteEntry.COLUMN_RELEASE_DATE);
         int voteAverageIndex = cursor.getColumnIndex(DatabaseContract.FavoriteEntry.COLUMN_VOTE_AVERAGE);
 
-        if (cursor.moveToNext()){
+        while (cursor.moveToNext()){
             Film film = new Film();
 
             film.setId(cursor.getInt(idIndex));
