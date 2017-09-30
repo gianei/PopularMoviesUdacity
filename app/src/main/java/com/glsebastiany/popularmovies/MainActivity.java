@@ -1,7 +1,6 @@
 package com.glsebastiany.popularmovies;
 
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -19,6 +18,7 @@ import android.widget.TextView;
 
 import com.glsebastiany.popularmovies.data.FilmsContentProviderCursorHelper;
 import com.glsebastiany.popularmovies.model.Film;
+import com.glsebastiany.popularmovies.model.Review;
 import com.glsebastiany.popularmovies.util.NetworkUtils;
 
 import java.io.IOException;
@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
-        LoaderManager.LoaderCallbacks<List<Film>> {
+        LoaderManager.LoaderCallbacks<List<Film>>{
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int TASK_LOADER_ID = 0;
@@ -148,12 +148,12 @@ public class MainActivity extends AppCompatActivity implements
                 sortType = NetworkUtils.SortType.Popular;
             }
 
-            URL url = NetworkUtils.buildUrl(sortType);
+            URL url = NetworkUtils.buildFilmsUrl(sortType);
 
             try {
                 String response = NetworkUtils.getResponseFromHttpUrl(url);
 
-                return NetworkUtils.parseJson(response);
+                return NetworkUtils.parseFilmsListJson(response);
             } catch (IOException e) {
                 e.printStackTrace();
                 return null;

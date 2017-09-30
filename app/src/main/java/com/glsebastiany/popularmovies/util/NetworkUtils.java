@@ -4,10 +4,12 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.glsebastiany.popularmovies.BuildConfig;
 import com.glsebastiany.popularmovies.model.Film;
+import com.glsebastiany.popularmovies.model.Review;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,12 +40,36 @@ public class NetworkUtils {
     private static final String PATH_TOP_RATED = "top_rated";
     private static final String PATH_DEFAULT_WIDTH = "w500";
 
+    private static final String PATH_REVIEWS = "reviews";
+    private static final String PATH_VIDEOS = "videos";
+
+    public enum DetailType {
+        Reviews,
+        Videos
+    }
+
+    public static URL buildFilmDetailUrl(DetailType detailType, String filmId){
+        Uri.Builder builder = Uri.parse(TMDB_BASE_URL).buildUpon()
+                .appendPath(PATH_MOVIE)
+                .appendPath(filmId);
+        switch (detailType){
+            case Reviews:
+                builder.appendPath(PATH_REVIEWS);
+                break;
+            case Videos:
+                builder.appendPath(PATH_VIDEOS);
+                break;
+        }
+
+        return tryBuildUrl(builder);
+    }
+
     public enum SortType {
         Popular,
         TopRated
     }
 
-    public static URL buildUrl(SortType sortType) {
+    public static URL buildFilmsUrl(SortType sortType) {
         Uri.Builder builder = Uri.parse(TMDB_BASE_URL).buildUpon()
                 .appendPath(PATH_MOVIE);
         switch (sortType){
@@ -55,17 +81,19 @@ public class NetworkUtils {
                 break;
         }
 
-        builder.appendQueryParameter(PARAM_KEY, TMDB_API_KEY);
+        return tryBuildUrl(builder);
+    }
 
+    @Nullable
+    private static URL tryBuildUrl(Uri.Builder builder) {
+        builder.appendQueryParameter(PARAM_KEY, TMDB_API_KEY);
         URL url = null;
         try {
             url = new URL(builder.build().toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-
         Log.v(TAG, "Built URI " + url);
-
         return url;
     }
 
@@ -96,7 +124,7 @@ public class NetworkUtils {
         }
     }
 
-    public static List<Film> parseJson(String jsonString){
+    public static List<Film> parseFilmsListJson(String jsonString){
 
         ArrayList<Film> movies;
 
@@ -122,6 +150,37 @@ public class NetworkUtils {
             }
 
             return movies;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return new ArrayList<>(0);
+        }
+
+    }
+
+    public static List<Review> parseReviewsListJson(String jsonString){
+
+        ArrayList<Review> reviews;
+
+        try {
+            JSONObject object = new JSONObject(jsonString);
+
+            JSONArray jsonArray = object.getJSONArray("results");
+            reviews = new ArrayList<>(jsonArray.length());
+
+            for (int i = 0; i < jsonArray.length(); i++){
+                Review review = new Review();
+
+                JSONObject currentJsonObject = jsonArray.getJSONObject(i);
+
+                review.setId(currentJsonObject.getString("id"));
+                review.setAuthor(currentJsonObject.getString("author"));
+                review.setContent(currentJsonObject.getString("content"));
+                review.setUrl(currentJsonObject.getString("url"));
+
+                reviews.add(review);
+            }
+
+            return reviews;
         } catch (JSONException e) {
             e.printStackTrace();
             return new ArrayList<>(0);
