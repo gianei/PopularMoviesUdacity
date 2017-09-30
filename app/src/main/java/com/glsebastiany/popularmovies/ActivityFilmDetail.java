@@ -14,11 +14,13 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.glsebastiany.popularmovies.data.DatabaseContract;
 import com.glsebastiany.popularmovies.data.FilmsContentProviderCursorHelper;
 import com.glsebastiany.popularmovies.model.Film;
 import com.glsebastiany.popularmovies.model.Review;
+import com.glsebastiany.popularmovies.model.Video;
 import com.glsebastiany.popularmovies.util.CachedAsyncTaskLoader;
 import com.glsebastiany.popularmovies.util.NetworkUtils;
 import com.squareup.picasso.Picasso;
@@ -37,6 +39,7 @@ public class ActivityFilmDetail extends AppCompatActivity implements
     private static final String EXTRA_FILM = "EXTRA_FILM";
     private static final int TASK_CURSOR_LOADER_ID = 0;
     private static final int TASK_REVIEWS_LOADER_ID = 1;
+    private static final int TASK_VIDEOS_LOADER_ID = 2;
     private static final String TASK_LOADER_ID_BUNDLE_KEY = "ID_BUNDLE_KEY";
     private static final String BUNDLE_IS_FILM_FAVORITE_IN_DB = "BUNDLE_IS_FILM_FAVORITE_IN_DB";
 
@@ -53,6 +56,9 @@ public class ActivityFilmDetail extends AppCompatActivity implements
     private RecyclerView mReviewsRecyclerView;
     private ReviewsAdapter mReviewsAdapter;
 
+    private RecyclerView mVideosRecyclerView;
+    private VideosAdapter mVideosAdapter;
+
     public static void startActivity(Context context, Film film){
         Intent intent = new Intent(context, ActivityFilmDetail.class);
         intent.putExtra(EXTRA_FILM, Parcels.wrap(film));
@@ -67,6 +73,7 @@ public class ActivityFilmDetail extends AppCompatActivity implements
 
         findIds();
         setupReviewsList();
+        setupVideosList();
 
         Intent intent = getIntent();
 
@@ -83,6 +90,7 @@ public class ActivityFilmDetail extends AppCompatActivity implements
             args.putString(TASK_LOADER_ID_BUNDLE_KEY, Integer.toString(mFilm.getId()));
 
             getSupportLoaderManager().initLoader(TASK_REVIEWS_LOADER_ID, args, this);
+            getSupportLoaderManager().initLoader(TASK_VIDEOS_LOADER_ID, args, this);
             getSupportLoaderManager().restartLoader(TASK_CURSOR_LOADER_ID, args, this);
         }
     }
@@ -101,6 +109,7 @@ public class ActivityFilmDetail extends AppCompatActivity implements
         mTextViewSynopsis = findViewById(R.id.tv_synopsis);
         mSwitchFavorite = findViewById(R.id.sw_favorite);
         mReviewsRecyclerView = findViewById(R.id.rv_reviews);
+        mVideosRecyclerView = findViewById(R.id.rv_videos);
     }
 
     private void bindView() {
@@ -153,6 +162,17 @@ public class ActivityFilmDetail extends AppCompatActivity implements
         mReviewsRecyclerView.setAdapter(mReviewsAdapter);
     }
 
+    private void setupVideosList() {
+        mVideosRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mVideosAdapter = new VideosAdapter(new VideosAdapter.VideoClickListener() {
+            @Override
+            public void onFilmClick(Video video) {
+                video.open(ActivityFilmDetail.this);
+            }
+        });
+        mVideosRecyclerView.setAdapter(mVideosAdapter);
+    }
+
     @Override
     public Loader<Object> onCreateLoader(int id, final Bundle loaderArgs) {
         final String filmId = loaderArgs.getString(TASK_LOADER_ID_BUNDLE_KEY);
@@ -176,6 +196,24 @@ public class ActivityFilmDetail extends AppCompatActivity implements
                     }
                 };
 
+            case TASK_VIDEOS_LOADER_ID:
+                return new CachedAsyncTaskLoader<Object>(this) {
+                    @Override
+                    public Object internalLoadInBackground() throws Exception {
+
+                        URL url = NetworkUtils.buildFilmDetailUrl(NetworkUtils.DetailType.Videos, filmId);
+
+                        try {
+                            String response = NetworkUtils.getResponseFromHttpUrl(url);
+
+                            return NetworkUtils.parseVideosListJson(response);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    }
+                };
+
             case TASK_CURSOR_LOADER_ID:
                 return (Loader) new CursorLoader(this, DatabaseContract.FavoriteEntry.CONTENT_URI.buildUpon().appendPath(filmId).build(), null, null, null, null);
         }
@@ -189,6 +227,9 @@ public class ActivityFilmDetail extends AppCompatActivity implements
             case TASK_REVIEWS_LOADER_ID:
                 mReviewsAdapter.setReviews((List<Review>) data);
                 break;
+            case TASK_VIDEOS_LOADER_ID:
+                mVideosAdapter.setVideos((List<Video>) data);
+                break;
             case TASK_CURSOR_LOADER_ID:
                 setFavoriteSwitchFromCursor((Cursor) data);
                 break;
@@ -200,6 +241,8 @@ public class ActivityFilmDetail extends AppCompatActivity implements
         switch (loader.getId()){
             case TASK_REVIEWS_LOADER_ID:
                 mReviewsAdapter.setReviews(null);
+            case TASK_VIDEOS_LOADER_ID:
+                mVideosAdapter.setVideos(null);
             case TASK_CURSOR_LOADER_ID:
                 setFavoriteSwitchFromCursor(null);
                 break;

@@ -8,4 +8,7 @@
     <string name="error_no_internet">You have no Internet connection</string>
     <string name="error_no_favorites">You have no Favorites</string>
     <string name="reviews">Reviews</string>
+    <string name="trailers">Trailers</string>
+    <string name="you_tube_error">Could not open YouTube</string>
+    <string name="error_not_you_tube">Can not open link that is not from youtube!</string>
 </resources>

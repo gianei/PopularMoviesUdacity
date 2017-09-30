@@ -10,6 +10,7 @@ import android.util.Log;
 import com.glsebastiany.popularmovies.BuildConfig;
 import com.glsebastiany.popularmovies.model.Film;
 import com.glsebastiany.popularmovies.model.Review;
+import com.glsebastiany.popularmovies.model.Video;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -178,6 +179,37 @@ public class NetworkUtils {
                 review.setUrl(currentJsonObject.getString("url"));
 
                 reviews.add(review);
+            }
+
+            return reviews;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return new ArrayList<>(0);
+        }
+
+    }
+
+    public static List<Video> parseVideosListJson(String jsonString){
+
+        ArrayList<Video> reviews;
+
+        try {
+            JSONObject object = new JSONObject(jsonString);
+
+            JSONArray jsonArray = object.getJSONArray("results");
+            reviews = new ArrayList<>(jsonArray.length());
+
+            for (int i = 0; i < jsonArray.length(); i++){
+                Video video = new Video();
+
+                JSONObject currentJsonObject = jsonArray.getJSONObject(i);
+
+                video.setId(currentJsonObject.getString("id"));
+                video.setSite(currentJsonObject.getString("site"));
+                video.setName(currentJsonObject.getString("name"));
+                video.setKey(currentJsonObject.getString("key"));
+
+                reviews.add(video);
             }
 
             return reviews;
