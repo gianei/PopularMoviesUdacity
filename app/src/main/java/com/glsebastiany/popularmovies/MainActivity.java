@@ -1,15 +1,12 @@
 package com.glsebastiany.popularmovies;
 
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,11 +15,9 @@ import android.widget.TextView;
 
 import com.glsebastiany.popularmovies.data.FilmsContentProviderCursorHelper;
 import com.glsebastiany.popularmovies.model.Film;
-import com.glsebastiany.popularmovies.model.Review;
+import com.glsebastiany.popularmovies.util.CachedAsyncTaskLoader;
 import com.glsebastiany.popularmovies.util.NetworkUtils;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +25,9 @@ public class MainActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<List<Film>>{
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final int TASK_LOADER_ID = 0;
+    private static final int TASK_FAVORITES_LOADER_ID = 0;
+    private static final int TASK_FETCH_POPULAR_LOADER_ID = 1;
+    private static final int TASK_FETCH_TOP_RATED_LOADER_ID = 2;
     private static final String SELECTED_FILTER_PREF_KEY = "selected_filter_pref_key";
 
     private RecyclerView mFilmsRecyclerView;
@@ -52,14 +49,6 @@ public class MainActivity extends AppCompatActivity implements
         mPreferences = getPreferences(MODE_PRIVATE);
 
         applyFilter(mPreferences.getInt(SELECTED_FILTER_PREF_KEY, R.id.menu_sort_popular));
-    }
-
-    private void fetchMovies(NetworkUtils.SortType sortType) {
-        if (NetworkUtils.isConnectedToInternet(this)) {
-            new FetchMoviesTask().execute(sortType);
-        } else {
-            setErrorState(getString(R.string.error_no_internet));
-        }
     }
 
     private void findIds() {
@@ -100,20 +89,19 @@ public class MainActivity extends AppCompatActivity implements
     private boolean applyFilter(int menuItemId) {
         switch (menuItemId){
             case R.id.menu_sort_popular:
-                fetchMovies(NetworkUtils.SortType.Popular);
+                getSupportLoaderManager().restartLoader(TASK_FETCH_POPULAR_LOADER_ID, null, this);
                 return true;
             case R.id.menu_sort_top_rated:
-                fetchMovies(NetworkUtils.SortType.TopRated);
+                getSupportLoaderManager().restartLoader(TASK_FETCH_TOP_RATED_LOADER_ID, null, this);
                 return true;
             case R.id.menu_sort_favorites:
-                preFetchSetStatus();
-                getSupportLoaderManager().initLoader(TASK_LOADER_ID, null, this);
+                getSupportLoaderManager().initLoader(TASK_FAVORITES_LOADER_ID, null, this);
                 return true;
         }
         return false;
     }
 
-    private void preFetchSetStatus() {
+    private void preLoadSetStatus() {
         mFilmsAdapter.setFilms(null);
         mProgressBar.setVisibility(View.VISIBLE);
         mErrorText.setVisibility(View.GONE);
@@ -132,89 +120,88 @@ public class MainActivity extends AppCompatActivity implements
         mErrorText.setVisibility(View.VISIBLE);
     }
 
-    private class FetchMoviesTask extends AsyncTask<NetworkUtils.SortType, Void, List<Film>>{
-
-        @Override
-        protected void onPreExecute() {
-            preFetchSetStatus();
-        }
-
-        @Override
-        protected List<Film> doInBackground(NetworkUtils.SortType... params) {
-            NetworkUtils.SortType sortType;
-            if (params != null && params.length > 0){
-                sortType = params[0];
-            } else {
-                sortType = NetworkUtils.SortType.Popular;
-            }
-
-            URL url = NetworkUtils.buildFilmsUrl(sortType);
-
-            try {
-                String response = NetworkUtils.getResponseFromHttpUrl(url);
-
-                return NetworkUtils.parseFilmsListJson(response);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(List<Film> movies) {
-            postLoadSetStatus(movies);
-            Log.v(TAG, "Async task completed");
-        }
-    }
-
     @Override
-    public Loader<List<Film>> onCreateLoader(int id, final Bundle loaderArgs) {
+    public Loader<List<Film>> onCreateLoader(final int id, final Bundle loaderArgs) {
+        switch (id) {
+            case TASK_FETCH_POPULAR_LOADER_ID:
+            case TASK_FETCH_TOP_RATED_LOADER_ID:
+                return new CachedAsyncTaskLoader<List<Film>>(this) {
 
-        return new AsyncTaskLoader<List<Film>>(this) {
+                    @Override
+                    protected void onStartLoading() {
+                        preLoadSetStatus();
+                        if (NetworkUtils.isConnectedToInternet(getContext())){
+                            super.onStartLoading();
+                        } else {
+                            setErrorState(getString(R.string.error_no_internet));
+                            deliverCancellation();
+                        }
+                    }
 
-            List<Film> mTaskData = null;
+                    @Override
+                    public List<Film> internalLoadInBackground() throws Exception {
 
-            @Override
-            protected void onStartLoading() {
-                if (mTaskData != null) {
-                    deliverResult(mTaskData);
-                } else {
-                    forceLoad();
-                }
-            }
+                        NetworkUtils.SortType sortType;
+                        if (id == TASK_FETCH_POPULAR_LOADER_ID ){
+                            sortType = NetworkUtils.SortType.Popular;
+                        } else {
+                            sortType = NetworkUtils.SortType.TopRated;
+                        }
 
-            @Override
-            public List<Film> loadInBackground() {
-                try {
-                    return FilmsContentProviderCursorHelper.getFilmsFromCursor(FilmsContentProviderCursorHelper.getFilmsCursor(getContext()));
+                        String response = NetworkUtils.getResponseFromHttpUrl(NetworkUtils.buildFilmsUrl(sortType));
 
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to asynchronously load data.");
-                    e.printStackTrace();
-                    return null;
-                }
-            }
+                        return NetworkUtils.parseFilmsListJson(response);
+                    }
 
-            public void deliverResult(List<Film> data) {
-                mTaskData = data;
-                super.deliverResult(data);
-            }
-        };
+                };
 
+            case TASK_FAVORITES_LOADER_ID:
+                return new CachedAsyncTaskLoader<List<Film>>(this) {
+                    @Override
+                    protected void onStartLoading() {
+                        preLoadSetStatus();
+                        super.onStartLoading();
+                    }
+
+                    @Override
+                    public List<Film> internalLoadInBackground() throws Exception {
+                        return FilmsContentProviderCursorHelper.getFilmsFromCursor(FilmsContentProviderCursorHelper.getFilmsCursor(getContext()));
+                    }
+
+                };
+
+        }
+
+        return null;
     }
 
     @Override
     public void onLoadFinished(Loader<List<Film>> loader, List<Film> data) {
-        if (data.size() == 0){
-            setErrorState(getString(R.string.error_no_favorites));
-        } else {
-            postLoadSetStatus(data);
+        switch (loader.getId()) {
+            case TASK_FETCH_POPULAR_LOADER_ID:
+            case TASK_FETCH_TOP_RATED_LOADER_ID:
+                postLoadSetStatus(data);
+                break;
+
+            case TASK_FAVORITES_LOADER_ID:
+                if (data.size() == 0) {
+                    setErrorState(getString(R.string.error_no_favorites));
+                } else {
+                    postLoadSetStatus(data);
+                }
+                break;
         }
     }
 
     @Override
     public void onLoaderReset(Loader<List<Film>> loader) {
-        postLoadSetStatus(new ArrayList<Film>());
+        switch (loader.getId()) {
+            case TASK_FETCH_POPULAR_LOADER_ID:
+            case TASK_FETCH_TOP_RATED_LOADER_ID:
+            case TASK_FAVORITES_LOADER_ID:
+                postLoadSetStatus(new ArrayList<Film>());
+                break;
+        }
     }
 
 }
