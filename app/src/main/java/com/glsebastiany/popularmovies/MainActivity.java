@@ -2,6 +2,7 @@ package com.glsebastiany.popularmovies;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
@@ -29,9 +30,11 @@ public class MainActivity extends AppCompatActivity implements
     private static final int TASK_FETCH_POPULAR_LOADER_ID = 1;
     private static final int TASK_FETCH_TOP_RATED_LOADER_ID = 2;
     private static final String SELECTED_FILTER_PREF_KEY = "selected_filter_pref_key";
+    private static final String BUNDLE_RECYCLER_LAYOUT = "bundle_recycler_layout";
 
     private RecyclerView mFilmsRecyclerView;
     private FilmsAdapter mFilmsAdapter;
+    private Parcelable mSavedRecyclerLayoutState;
 
     private TextView mErrorText;
     private ProgressBar mProgressBar;
@@ -46,9 +49,25 @@ public class MainActivity extends AppCompatActivity implements
         findIds();
         setupFilmsGrid();
 
+        if(savedInstanceState != null)
+        {
+            mSavedRecyclerLayoutState = savedInstanceState.getParcelable(BUNDLE_RECYCLER_LAYOUT);
+        }
+
         mPreferences = getPreferences(MODE_PRIVATE);
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         applyFilter(mPreferences.getInt(SELECTED_FILTER_PREF_KEY, R.id.menu_sort_popular));
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(BUNDLE_RECYCLER_LAYOUT, mFilmsRecyclerView.getLayoutManager().onSaveInstanceState());
     }
 
     private void findIds() {
@@ -108,6 +127,10 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void postLoadSetStatus(List<Film> movies) {
+        if (mSavedRecyclerLayoutState != null){
+            mFilmsRecyclerView.getLayoutManager().onRestoreInstanceState(mSavedRecyclerLayoutState);
+            mSavedRecyclerLayoutState = null;
+        }
         mFilmsAdapter.setFilms(movies);
         mProgressBar.setVisibility(View.GONE);
         mErrorText.setVisibility(View.GONE);
